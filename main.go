@@ -11,14 +11,44 @@ import (
 // UTF-8 encodings of Unicode code points
 // See -> https://medium.com/@tyler_brewer2/bits-bytes-and-byte-slices-in-go-8a99012dcc8f
 func home(response http.ResponseWriter, request *http.Request) {
+
+	//As / is a subtree path which matches every URL path we
+	//need to restrict it to only matching "/" by doing this check
+	if request.URL.Path != "/" {
+		http.NotFound(response, request)
+		return
+	}
+
 	response.Write([]byte("Hello from Snippetbox"))
+}
+
+// Add a showSnippet handler function.
+func showSnippet(response http.ResponseWriter, request *http.Request) {
+	response.Write([]byte("Display a specific snippet..."))
+}
+
+// Add a createSnippet handler function.
+func createSnippet(response http.ResponseWriter, request *http.Request) {
+	response.Write([]byte("Create a new snippet..."))
 }
 
 func main() {
 	//Initialize a new NewServeMux, this is a router that is responsible for
 	//registering our routes or paths with their respective handler functions
 	mux := http.NewServeMux()
+
+	//This path is a subtree path (because it ends in a trailing slash)
+	//Another example of a subtree path would be "/static/"
+	//These kinds of paths are matched when the start or a request URL
+	//path matches the subtree path, these paths acts like they
+	//have a wild card at the end eg "/**" or "/static/**"
 	mux.HandleFunc("/", home)
+
+	//Our paths here are fixed paths, Go's servemux will only
+	//match these paths and call the handlers when the URL path
+	//exactly matches the fixed path
+	mux.HandleFunc("/snippet", showSnippet)
+	mux.HandleFunc("/snippet/create", createSnippet)
 
 	log.Println("Starting server on :4000")
 	//Start a new web server on port 4000
