@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // This is a handler function which writes a byte slice
@@ -24,7 +26,20 @@ func home(response http.ResponseWriter, request *http.Request) {
 
 // Add a showSnippet handler function.
 func showSnippet(response http.ResponseWriter, request *http.Request) {
-	response.Write([]byte("Display a specific snippet..."))
+	//// Extract the value of the id parameter from the query string
+	queryId := request.URL.Query().Get("id")
+
+	//Convert query to a string
+	id, err := strconv.Atoi(queryId)
+
+	//If queryId cannot be converted to s a string or if string is less than 1
+	//return not found error
+	if err != nil || id < 1 {
+		http.NotFound(response, request)
+		return
+	}
+
+	fmt.Fprintf(response, "Display a specific snippet with ID %d...", id)
 }
 
 // Add a createSnippet handler function.
