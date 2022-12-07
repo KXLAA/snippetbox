@@ -2,17 +2,40 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"text/template"
 )
 
 func home(response http.ResponseWriter, request *http.Request) {
+	//Make sure this handler is only executed when url is = "/"
 	if request.URL.Path != "/" {
 		http.NotFound(response, request)
 		return
 	}
 
-	response.Write([]byte("Hello from Snippetbox"))
+	//parse the html files
+	files := []string{
+		//template page for this route, this must come first
+		"./ui/html/home.page.html",
+		//layout & partial templates
+		"./ui/html/base.layout.html",
+		"./ui/html/footer.partial.html",
+	}
+	template, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(response, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	//Execute the parsed html template with any dynamic data or nil if none
+	err = template.Execute(response, nil)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(response, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func showSnippet(response http.ResponseWriter, request *http.Request) {
