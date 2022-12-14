@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
 
 	"github.com/KXLAA/snippetbox/pkg/models"
 )
@@ -17,27 +16,38 @@ func (app *application) home(response http.ResponseWriter, request *http.Request
 		return
 	}
 
-	//parse the html files
-	files := []string{
-		//template page for this route, this must come first
-		"./ui/html/home.page.html",
-		//layout & partial templates
-		"./ui/html/base.layout.html",
-		"./ui/html/footer.partial.html",
-	}
-	template, err := template.ParseFiles(files...)
+	snippets, err := app.snippets.Latest()
+
 	if err != nil {
-		app.errorLog.Println(err.Error())
 		app.serverError(response, err)
 		return
 	}
 
-	//Execute the parsed html template with any dynamic data or nil if none
-	err = template.Execute(response, nil)
-	if err != nil {
-		app.errorLog.Println(err.Error())
-		app.serverError(response, err)
+	for _, snippet := range snippets {
+		fmt.Fprintf(response, "%v\n", snippet)
 	}
+
+	//parse the html files
+	// files := []string{
+	// 	//template page for this route, this must come first
+	// 	"./ui/html/home.page.html",
+	// 	//layout & partial templates
+	// 	"./ui/html/base.layout.html",
+	// 	"./ui/html/footer.partial.html",
+	// }
+	// template, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	app.errorLog.Println(err.Error())
+	// 	app.serverError(response, err)
+	// 	return
+	// }
+
+	//Execute the parsed html template with any dynamic data or nil if none
+	// err = template.Execute(response, nil)
+	// if err != nil {
+	// 	app.errorLog.Println(err.Error())
+	// 	app.serverError(response, err)
+	// }
 }
 
 func (app *application) showSnippet(response http.ResponseWriter, request *http.Request) {

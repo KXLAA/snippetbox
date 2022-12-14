@@ -64,5 +64,44 @@ func (model *SnippetModel) Get(id int) (*models.Snippet, error) {
 }
 
 func (model *SnippetModel) Latest() ([]*models.Snippet, error) {
-	return nil, nil
+
+	//SQL statement to execute
+	stmt := `SELECT id, title, content, created, expires FROM snippets
+			WHERE expires > UTC_TIMESTAMP() ORDER BY created DESC LIMIT 10`
+
+	//execute the statement, since we are looking for multiple rows we use the Query() method
+	rows, err := model.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+
+	// We defer rows.Close() to ensure the sql.Rows resultset is
+	// always properly closed before the Latest() method returns.
+	defer rows.Close()
+
+	// Initialize an empty slice to hold the models.Snippets objects.
+	snippets := []*models.Snippet{}
+
+	for rows.Next() {
+		// Create a pointer to a new zeroed Snippet struct
+		snippet := &models.Snippet{}
+
+		// Use rows.Scan() to copy the values from each field in the row to the new Snippet object that we created.
+		err := rows.Scan(&snippet.ID, &snippet.Title, &snippet.Content, &snippet.Created, &snippet.Expires)
+		if err != nil {
+			return nil, err
+		}
+
+		// Append it to the slice of snippets.
+		snippets = append(snippets, snippet)
+	}
+
+	// When the rows.Next() loop has finished we call rows.Err() to retrieve any
+	// error that was encountered during the iteration.
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// If everything went OK then return the Snippets slice.
+	return snippets, nil
 }
