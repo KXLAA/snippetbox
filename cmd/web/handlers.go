@@ -57,5 +57,20 @@ func (app *application) createSnippet(response http.ResponseWriter, request *htt
 		return
 
 	}
-	response.Write([]byte("Create a new snippet..."))
+
+	//Dummy data to test
+	title := "Oh Hello"
+	content := "O hello snail\nClimb Mount Fuji,\nBut faster, faster!\n\n– Kola Oh"
+	expires := "20"
+
+	//insert data into database
+	id, err := app.snippets.Insert(title, content, expires)
+
+	if err != nil {
+		app.serverError(response, err)
+		return
+	}
+
+	// Redirect the user to the relevant page for the snippet
+	http.Redirect(response, request, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
 }
