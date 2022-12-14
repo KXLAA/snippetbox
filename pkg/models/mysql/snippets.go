@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/KXLAA/snippetbox/pkg/models"
 )
@@ -32,7 +33,34 @@ func (model *SnippetModel) Insert(title, content, expires string) (int, error) {
 }
 
 func (model *SnippetModel) Get(id int) (*models.Snippet, error) {
-	return nil, nil
+
+	//SQL statement to execute
+	stmt := `SELECT id, title, content, created, expires FROM snippets
+			 WHERE expires > UTC_TIMESTAMP() AND id = ?`
+
+	// Initialize a pointer to a new zeroed Snippet struct.
+	snippet := &models.Snippet{}
+
+	//execute the statement, since we are looking for a row we use the QueryRow() method
+	row := model.DB.QueryRow(stmt, id)
+
+	/// Use row.Scan() to copy the values from each field in sql.Row to the
+	// corresponding field in the Snippet struct
+	err := row.Scan(&snippet.ID, &snippet.Title, &snippet.Content, &snippet.Created, &snippet.Expires)
+
+	if err != nil {
+		// If the query returns no rows, then row.Scan() will return a sql.ErrNoRows error.
+		// We use the errors.Is() function check for that error specifically, and return
+		// our own models.ErrNoRecord error instead.
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+
+	//Return snippet
+	return snippet, nil
 }
 
 func (model *SnippetModel) Latest() ([]*models.Snippet, error) {

@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"text/template"
+
+	"github.com/KXLAA/snippetbox/pkg/models"
 )
 
 func (app *application) home(response http.ResponseWriter, request *http.Request) {
@@ -46,7 +49,21 @@ func (app *application) showSnippet(response http.ResponseWriter, request *http.
 		return
 	}
 
-	fmt.Fprintf(response, "Display a specific snippet with ID %d...", id)
+	//Get snippets based on Id
+	snippet, err := app.snippets.Get(id)
+
+	//if no snippets, return 404 not found error
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(response)
+		} else {
+			app.serverError(response, err)
+		}
+		return
+	}
+
+	// Write the snippet data as a plain-text HTTP response body.
+	fmt.Fprintf(response, "%v", snippet)
 }
 
 func (app *application) createSnippet(response http.ResponseWriter, request *http.Request) {
