@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strconv"
 
@@ -72,8 +73,27 @@ func (app *application) showSnippet(response http.ResponseWriter, request *http.
 		return
 	}
 
-	// Write the snippet data as a plain-text HTTP response body.
-	fmt.Fprintf(response, "%v", snippet)
+	// Create an instance of a templateData struct holding the snippet data
+	templateData := &templateData{Snippet: snippet}
+
+	files := []string{
+		"./ui/html/show.page.html",
+		"./ui/html/base.layout.html",
+		"./ui/html/footer.partial.html",
+	}
+
+	templates, err := template.ParseFiles(files...)
+
+	if err != nil {
+		app.serverError(response, err)
+		return
+	}
+
+	err = templates.Execute(response, templateData)
+
+	if err != nil {
+		app.serverError(response, err)
+	}
 }
 
 func (app *application) createSnippet(response http.ResponseWriter, request *http.Request) {
