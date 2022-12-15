@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"time"
 )
 
 // The serverError helper writes an error message and stack trace to the errorLog,
@@ -31,6 +32,15 @@ func (app *application) notFound(response http.ResponseWriter) {
 	app.clientError(response, http.StatusNotFound)
 }
 
+// Function to add default data to the render
+func (app *application) addDefaultData(td *templateData, request *http.Request) *templateData {
+	if td == nil {
+		td = &templateData{}
+	}
+	td.CurrentYear = time.Now().Year()
+	return td
+}
+
 // Render function to help with rendering dynamic templates
 func (app *application) render(response http.ResponseWriter, request *http.Request, name string, templateData *templateData) {
 	template, ok := app.templateCache[name]
@@ -44,7 +54,7 @@ func (app *application) render(response http.ResponseWriter, request *http.Reque
 
 	// Write the template to the buffer, instead of straight to the http.ResponseWriter. I
 	//f there's an error, call our serverError helper and then return.
-	err := template.Execute(buffer, templateData)
+	err := template.Execute(buffer, app.addDefaultData(templateData, request)) //Inject any default data with addDefaultData helper
 	if err != nil {
 		app.serverError(response, err)
 		return
