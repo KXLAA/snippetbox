@@ -18,37 +18,33 @@ func (app *application) home(response http.ResponseWriter, request *http.Request
 	}
 
 	snippets, err := app.snippets.Latest()
-
 	if err != nil {
 		app.serverError(response, err)
 		return
 	}
 
-	for _, snippet := range snippets {
-		fmt.Fprintf(response, "%v\n", snippet)
+	// Create an instance of a templateData struct holding the slice of  snippets.
+	templateData := &templateData{Snippets: snippets}
+
+	// parse the html files
+	files := []string{
+		//template page for this route, this must come first
+		"./ui/html/home.page.html",
+		//layout & partial templates
+		"./ui/html/base.layout.html",
+		"./ui/html/footer.partial.html",
+	}
+	template, err := template.ParseFiles(files...)
+	if err != nil {
+		app.serverError(response, err)
+		return
 	}
 
-	//parse the html files
-	// files := []string{
-	// 	//template page for this route, this must come first
-	// 	"./ui/html/home.page.html",
-	// 	//layout & partial templates
-	// 	"./ui/html/base.layout.html",
-	// 	"./ui/html/footer.partial.html",
-	// }
-	// template, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.errorLog.Println(err.Error())
-	// 	app.serverError(response, err)
-	// 	return
-	// }
-
-	//Execute the parsed html template with any dynamic data or nil if none
-	// err = template.Execute(response, nil)
-	// if err != nil {
-	// 	app.errorLog.Println(err.Error())
-	// 	app.serverError(response, err)
-	// }
+	// Execute the parsed html template with any dynamic data or nil if none
+	err = template.Execute(response, templateData)
+	if err != nil {
+		app.serverError(response, err)
+	}
 }
 
 func (app *application) showSnippet(response http.ResponseWriter, request *http.Request) {
