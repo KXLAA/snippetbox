@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 
@@ -23,28 +22,8 @@ func (app *application) home(response http.ResponseWriter, request *http.Request
 		return
 	}
 
-	// Create an instance of a templateData struct holding the slice of  snippets.
-	templateData := &templateData{Snippets: snippets}
-
-	// parse the html files
-	files := []string{
-		//template page for this route, this must come first
-		"./ui/html/home.page.html",
-		//layout & partial templates
-		"./ui/html/base.layout.html",
-		"./ui/html/footer.partial.html",
-	}
-	template, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(response, err)
-		return
-	}
-
-	// Execute the parsed html template with any dynamic data or nil if none
-	err = template.Execute(response, templateData)
-	if err != nil {
-		app.serverError(response, err)
-	}
+	// Use the new render helper.
+	app.render(response, request, "home.page.html", &templateData{Snippets: snippets})
 }
 
 func (app *application) showSnippet(response http.ResponseWriter, request *http.Request) {
@@ -69,27 +48,9 @@ func (app *application) showSnippet(response http.ResponseWriter, request *http.
 		return
 	}
 
-	// Create an instance of a templateData struct holding the snippet data
-	templateData := &templateData{Snippet: snippet}
+	// Use the new render helper.
+	app.render(response, request, "show.page.html", &templateData{Snippet: snippet})
 
-	files := []string{
-		"./ui/html/show.page.html",
-		"./ui/html/base.layout.html",
-		"./ui/html/footer.partial.html",
-	}
-
-	templates, err := template.ParseFiles(files...)
-
-	if err != nil {
-		app.serverError(response, err)
-		return
-	}
-
-	err = templates.Execute(response, templateData)
-
-	if err != nil {
-		app.serverError(response, err)
-	}
 }
 
 func (app *application) createSnippet(response http.ResponseWriter, request *http.Request) {
