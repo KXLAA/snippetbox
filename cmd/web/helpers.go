@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -25,13 +26,12 @@ func (app *application) clientError(response http.ResponseWriter, status int) {
 	http.Error(response, http.StatusText(status), status)
 }
 
-// For consistency, we'll also implement a notFound helper. This is simply a
-// convenience wrapper around clientError which sends a 404 Not Found response to
-// the user.
+// This is simply  sends a 404 Not Found response to the user.
 func (app *application) notFound(response http.ResponseWriter) {
 	app.clientError(response, http.StatusNotFound)
 }
 
+// Render function to help with rendering dynamic templates
 func (app *application) render(response http.ResponseWriter, request *http.Request, name string, templateData *templateData) {
 	template, ok := app.templateCache[name]
 	if !ok {
@@ -39,9 +39,20 @@ func (app *application) render(response http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	err := template.Execute(response, templateData)
+	// Initialize a new buffer.
+	buffer := new(bytes.Buffer)
+
+	// Write the template to the buffer, instead of straight to the http.ResponseWriter. I
+	//f there's an error, call our serverError helper and then return.
+	err := template.Execute(buffer, templateData)
 	if err != nil {
 		app.serverError(response, err)
+		return
 	}
+
+	// Write the contents of the buffer to the http.ResponseWriter. Again, this
+	// is another time where we pass our http.ResponseWriter to a function that
+	// takes an io.Writer.
+	buffer.WriteTo(response)
 
 }
