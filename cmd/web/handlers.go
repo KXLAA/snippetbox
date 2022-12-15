@@ -17,37 +17,13 @@ func (app *application) home(response http.ResponseWriter, request *http.Request
 	}
 
 	snippets, err := app.snippets.Latest()
-
 	if err != nil {
 		app.serverError(response, err)
 		return
 	}
 
-	for _, snippet := range snippets {
-		fmt.Fprintf(response, "%v\n", snippet)
-	}
-
-	//parse the html files
-	// files := []string{
-	// 	//template page for this route, this must come first
-	// 	"./ui/html/home.page.html",
-	// 	//layout & partial templates
-	// 	"./ui/html/base.layout.html",
-	// 	"./ui/html/footer.partial.html",
-	// }
-	// template, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.errorLog.Println(err.Error())
-	// 	app.serverError(response, err)
-	// 	return
-	// }
-
-	//Execute the parsed html template with any dynamic data or nil if none
-	// err = template.Execute(response, nil)
-	// if err != nil {
-	// 	app.errorLog.Println(err.Error())
-	// 	app.serverError(response, err)
-	// }
+	// Use the new render helper.
+	app.render(response, request, "home.page.html", &templateData{Snippets: snippets})
 }
 
 func (app *application) showSnippet(response http.ResponseWriter, request *http.Request) {
@@ -72,8 +48,9 @@ func (app *application) showSnippet(response http.ResponseWriter, request *http.
 		return
 	}
 
-	// Write the snippet data as a plain-text HTTP response body.
-	fmt.Fprintf(response, "%v", snippet)
+	// Use the new render helper.
+	app.render(response, request, "show.page.html", &templateData{Snippet: snippet})
+
 }
 
 func (app *application) createSnippet(response http.ResponseWriter, request *http.Request) {

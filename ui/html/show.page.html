@@ -1,0 +1,20 @@
+{{template "base" .}}
+
+{{define "title"}}Snippet #{{.Snippet.ID}}{{end}}
+
+{{define "main"}} 
+<!-- between {{with .Snippet}} and the corresponding {{end}} tag, the value of dot is set to .Snippet. Dot essentially becomes the models. -->
+  {{with .Snippet}}
+    <div class='snippet'>
+      <div class='metadata'> 
+        <strong>{{.Title}}</strong> 
+        <span>#{{.ID}}</span>
+      </div> 
+      <pre><code>{{.Content}}</code></pre> 
+      <div class='metadata'>
+        <time>Created: {{.Created.Weekday}}</time>
+        <time>Expires: {{.Expires}}</tim> 
+      </div>
+    </div> 
+  {{end}}
+{{end}}
