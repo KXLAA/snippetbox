@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
+
+	"github.com/KXLAA/snippetbox/pkg/models"
 )
 
 func (app *application) home(response http.ResponseWriter, request *http.Request) {
@@ -14,27 +16,38 @@ func (app *application) home(response http.ResponseWriter, request *http.Request
 		return
 	}
 
-	//parse the html files
-	files := []string{
-		//template page for this route, this must come first
-		"./ui/html/home.page.html",
-		//layout & partial templates
-		"./ui/html/base.layout.html",
-		"./ui/html/footer.partial.html",
-	}
-	template, err := template.ParseFiles(files...)
+	snippets, err := app.snippets.Latest()
+
 	if err != nil {
-		app.errorLog.Println(err.Error())
 		app.serverError(response, err)
 		return
 	}
 
-	//Execute the parsed html template with any dynamic data or nil if none
-	err = template.Execute(response, nil)
-	if err != nil {
-		app.errorLog.Println(err.Error())
-		app.serverError(response, err)
+	for _, snippet := range snippets {
+		fmt.Fprintf(response, "%v\n", snippet)
 	}
+
+	//parse the html files
+	// files := []string{
+	// 	//template page for this route, this must come first
+	// 	"./ui/html/home.page.html",
+	// 	//layout & partial templates
+	// 	"./ui/html/base.layout.html",
+	// 	"./ui/html/footer.partial.html",
+	// }
+	// template, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	app.errorLog.Println(err.Error())
+	// 	app.serverError(response, err)
+	// 	return
+	// }
+
+	//Execute the parsed html template with any dynamic data or nil if none
+	// err = template.Execute(response, nil)
+	// if err != nil {
+	// 	app.errorLog.Println(err.Error())
+	// 	app.serverError(response, err)
+	// }
 }
 
 func (app *application) showSnippet(response http.ResponseWriter, request *http.Request) {
@@ -46,7 +59,21 @@ func (app *application) showSnippet(response http.ResponseWriter, request *http.
 		return
 	}
 
-	fmt.Fprintf(response, "Display a specific snippet with ID %d...", id)
+	//Get snippets based on Id
+	snippet, err := app.snippets.Get(id)
+
+	//if no snippets, return 404 not found error
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(response)
+		} else {
+			app.serverError(response, err)
+		}
+		return
+	}
+
+	// Write the snippet data as a plain-text HTTP response body.
+	fmt.Fprintf(response, "%v", snippet)
 }
 
 func (app *application) createSnippet(response http.ResponseWriter, request *http.Request) {
@@ -57,5 +84,20 @@ func (app *application) createSnippet(response http.ResponseWriter, request *htt
 		return
 
 	}
-	response.Write([]byte("Create a new snippet..."))
+
+	//Dummy data to test
+	title := "Oh Hello"
+	content := "O hello snail\nClimb Mount Fuji,\nBut faster, faster!\n\n– Kola Oh"
+	expires := "20"
+
+	//insert data into database
+	id, err := app.snippets.Insert(title, content, expires)
+
+	if err != nil {
+		app.serverError(response, err)
+		return
+	}
+
+	// Redirect the user to the relevant page for the snippet
+	http.Redirect(response, request, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
 }
